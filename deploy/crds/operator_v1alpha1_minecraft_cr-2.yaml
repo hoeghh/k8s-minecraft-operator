@@ -1,0 +1,8 @@
+apiVersion: operator.softica.com/v1alpha1
+kind: Minecraft
+metadata:
+  name: example-minecraft-2
+spec:
+  # Add fields here
+  version: "1.12.2"
+  uela: "true"

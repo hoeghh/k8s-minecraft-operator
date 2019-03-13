@@ -159,38 +159,47 @@ func newPodForCR(cr *operatorv1alpha1.Minecraft) *corev1.Pod {
 						{
 							ContainerPort: 25565,
 							Name:         "minecraft",
-						}
+						},
 					},
 					Env: envVars,
-					VolumeMount: []corev1.VolumeMount{
-						Name:      "minecraft-volume",
-						MountPath: "/minecraft-data",
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "minecraft-volume",
+							MountPath: "/minecraft-data",
+						},
 					},
 				},
 			},
-			Volume: []corev1.PersistentVolumeClaim{
-				Spec: []corev1.PersistentVolumeClaimSpec{
-				      StorageClassName = "ssd",
-				      VolumeName: "minecraft-volume",
+			// https://godoc.org/k8s.io/api/core/v1#Volume
+			Volumes: []corev1.Volume{
+				{
+					Name: "minecraft-volume",
 				},
+				// https://godoc.org/k8s.io/api/core/v1#VolumeSource
+//				corev1.PersistentVolumeClaim{
+//					Spec: corev1.PersistentVolumeClaimSpec{
+//				      	StorageClassName: "ssd",
+//				      	VolumeName: "minecraft-volume",
+//					},
+//				},
 			},
 		},
 	}
 }
 
 
-# kind: Pod
-# apiVersion: v1
-# metadata:
-#   name: mypod
-# spec:
-#   containers:
-#     - name: myfrontend
-#       image: nginx
-#       volumeMounts:
-#       - mountPath: "/minecraft-data"
-#         name: minecraft-volume
-#   volumes:
-#     - name: minecraft-volume
-#       persistentVolumeClaim:
-#         claimName: ssd
+//# kind: Pod
+//# apiVersion: v1
+//# metadata:
+//#   name: mypod
+//# spec:
+//#   containers:
+//#     - name: myfrontend
+//#       image: nginx
+//#       volumeMounts:
+//#       - mountPath: "/minecraft-data"
+//#         name: minecraft-volume
+//#   volumes:
+//#     - name: minecraft-volume
+//#       persistentVolumeClaim:
+//#         claimName: ssd
