@@ -175,41 +175,11 @@ func newPodForCR(cr *operatorv1alpha1.Minecraft) *corev1.Pod {
 					Name: "minecraft-volume",
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
-                                        //              {
- 	                                //                     Path: "/data",
-                                          //            },
+ 	                                        	Path: "/data",
                                                 },
 					},
 				},
 			},
-
-//                         Volumes: []corev1.Volume{
-//                                {
-//                                        Name: "minecraft-volume",
-//                                        VolumeSource: corev1.VolumeSource{
-//                                                EmptyDir: &corev1.EmptyDirVolumeSource{},
-//                                        },
-//                                },
-//                        },
-
-
-//			// https://godoc.org/k8s.io/api/core/v1#Volume
-//			Volumes: []corev1.Volume{
-//				{
-//					Name: "minecraft-volume",
-//					// https://godoc.org/k8s.io/api/core/v1#HostPathType
-//					VolumeSource: corev1.VolumeSource{
-//						{
-//							HostPath: corev1.HostPathVolumeSource{
-////								{
-//									Path: "/data",
-//								},
-//							},
-//						},
-//					},
-//				},
-//
-//			},
 		},
 	}
 }
