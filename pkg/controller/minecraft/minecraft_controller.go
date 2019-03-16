@@ -139,6 +139,10 @@ func newPodForCR(cr *operatorv1alpha1.Minecraft) *corev1.Pod {
 		},
 	}
 
+	var fsType int64
+	fsType = int64(1000)
+	
+
 	labels := map[string]string{
 		"app": cr.Name,
                 "version": cr.Spec.Version,
@@ -151,6 +155,10 @@ func newPodForCR(cr *operatorv1alpha1.Minecraft) *corev1.Pod {
 			Labels:    labels,
 		},
 		Spec: corev1.PodSpec{
+			SecurityContext: &corev1.PodSecurityContext{
+				FSGroup: &fsType,
+				RunAsUser: &fsType,
+			},
 			Containers: []corev1.Container{
 				{
 					Name:    "minecraft",
@@ -166,6 +174,7 @@ func newPodForCR(cr *operatorv1alpha1.Minecraft) *corev1.Pod {
 						{
 							Name:      "minecraft-volume",
 							MountPath: "/minecraft-data",
+							ReadOnly: false,
 						},
 					},
 				},
