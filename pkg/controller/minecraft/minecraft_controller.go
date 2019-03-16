@@ -170,36 +170,47 @@ func newPodForCR(cr *operatorv1alpha1.Minecraft) *corev1.Pod {
 					},
 				},
 			},
-			// https://godoc.org/k8s.io/api/core/v1#Volume
 			Volumes: []corev1.Volume{
 				{
 					Name: "minecraft-volume",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+                                        //              {
+ 	                                //                     Path: "/data",
+                                          //            },
+                                                },
+					},
 				},
-				// https://godoc.org/k8s.io/api/core/v1#VolumeSource
-//				corev1.PersistentVolumeClaim{
-//					Spec: corev1.PersistentVolumeClaimSpec{
-//				      	StorageClassName: "ssd",
-//				      	VolumeName: "minecraft-volume",
+			},
+
+//                         Volumes: []corev1.Volume{
+//                                {
+//                                        Name: "minecraft-volume",
+//                                        VolumeSource: corev1.VolumeSource{
+//                                                EmptyDir: &corev1.EmptyDirVolumeSource{},
+//                                        },
+//                                },
+//                        },
+
+
+//			// https://godoc.org/k8s.io/api/core/v1#Volume
+//			Volumes: []corev1.Volume{
+//				{
+//					Name: "minecraft-volume",
+//					// https://godoc.org/k8s.io/api/core/v1#HostPathType
+//					VolumeSource: corev1.VolumeSource{
+//						{
+//							HostPath: corev1.HostPathVolumeSource{
+////								{
+//									Path: "/data",
+//								},
+//							},
+//						},
 //					},
 //				},
-			},
+//
+//			},
 		},
 	}
 }
 
-
-//# kind: Pod
-//# apiVersion: v1
-//# metadata:
-//#   name: mypod
-//# spec:
-//#   containers:
-//#     - name: myfrontend
-//#       image: nginx
-//#       volumeMounts:
-//#       - mountPath: "/minecraft-data"
-//#         name: minecraft-volume
-//#   volumes:
-//#     - name: minecraft-volume
-//#       persistentVolumeClaim:
-//#         claimName: ssd
