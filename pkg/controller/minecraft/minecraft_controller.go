@@ -6,6 +6,7 @@ import (
 	operatorv1alpha1 "github.com/softica/minecraft-operator/pkg/apis/operator/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -100,10 +101,62 @@ func (r *ReconcileMinecraft) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 
+
+
+
+	ingress := newIngressForCR(instance)
+
+        // Set Minecraft instance as the owner and controller of the ingress
+        if err := controllerutil.SetControllerReference(instance, ingress, r.scheme); err != nil {
+                return reconcile.Result{}, err
+        }
+
+        // Check if this Ingress already exists
+        ingfound := &extensionsv1beta1.Ingress{}
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: ingress.Name, Namespace: ingress.Namespace}, ingfound)
+        if err != nil && errors.IsNotFound(err) {
+            err = r.client.Create(context.TODO(), ingress)
+            if err != nil {
+                return reconcile.Result{}, err
+            }
+        } else if err != nil {
+            return reconcile.Result{}, err
+        }
+
+
+
+
+
+
+        // Define a new Service object
+        service := newServiceForCR(instance)
+
+        // Set Minecraft instance as the owner and controller of the service
+        if err := controllerutil.SetControllerReference(instance, service, r.scheme); err != nil {
+                return reconcile.Result{}, err
+        }
+
+        // Check if this Service already exists
+        srvfound := &corev1.Service{}
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, srvfound)
+        if err != nil && errors.IsNotFound(err) {
+            err = r.client.Create(context.TODO(), service)
+            if err != nil {
+                return reconcile.Result{}, err
+            }
+        } else if err != nil {
+            return reconcile.Result{}, err
+        }
+
+
+
+
+
+
 	// Define a new Pod object
 	pod := newPodForCR(instance)
 
-	// Set Minecraft instance as the owner and controller
+	// Set Minecraft instance as the owner and controller of the pod
 	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -127,6 +180,63 @@ func (r *ReconcileMinecraft) Reconcile(request reconcile.Request) (reconcile.Res
 	// Pod already exists - don't requeue
 	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
 	return reconcile.Result{}, nil
+
+
+}
+
+// newIngressForCR returns a minecraft ingress with the same name/namespace as the cr
+func newIngressForCR(cr *operatorv1alpha1.Minecraft) *extensionsv1beta1.Ingress {
+	// https://godoc.org/k8s.io/api/extensions/v1beta1
+        labels := map[string]string{
+                "app": cr.Name,
+                "version": cr.Spec.Version,
+                "uela": cr.Spec.Uela,
+        }
+        return &extensionsv1beta1.Ingress{
+                ObjectMeta: metav1.ObjectMeta{
+                        Name:      cr.Name + "-service",
+                        Namespace: cr.Namespace,
+                        Labels:    labels,
+                },
+		Spec: extensionsv1beta1.IngressSpec{
+		// https://godoc.org/k8s.io/api/extensions/v1beta1#IngressSpec
+			Rules: []extensionsv1beta1.IngressRule{
+				{
+					Host: "static-host.com",  //TODO : Need to get hostname from CR
+				},
+			},
+		// https://godoc.org/k8s.io/api/extensions/v1beta1#IngressRule
+		},
+	}
+}
+
+// newServiceForCR returns a minecraft service with the same name/namespace as the cr
+func newServiceForCR(cr *operatorv1alpha1.Minecraft) *corev1.Service {
+        labels := map[string]string{
+                "app": cr.Name,
+                "version": cr.Spec.Version,
+                "uela": cr.Spec.Uela,
+        }
+        return &corev1.Service{
+		// https://godoc.org/k8s.io/api/core/v1#Service
+                ObjectMeta: metav1.ObjectMeta{
+                        Name:      cr.Name + "-service",
+                        Namespace: cr.Namespace,
+                        Labels:    labels,
+                },
+		Spec: corev1.ServiceSpec{
+			// https://godoc.org/k8s.io/api/core/v1#ServiceSpec
+//			ServiceType: ClusterIP,
+			Ports: []corev1.ServicePort{
+				{
+					Name: "minecraft",
+					Port: 25565,
+//					TargetPort: 25565,
+				},
+			},
+			Selector: labels,
+		},
+	}
 }
 
 // newPodForCR returns a minecraft pod with the same name/namespace as the cr
@@ -141,7 +251,6 @@ func newPodForCR(cr *operatorv1alpha1.Minecraft) *corev1.Pod {
 
 	var fsType int64
 	fsType = int64(1000)
-	
 
 	labels := map[string]string{
 		"app": cr.Name,
