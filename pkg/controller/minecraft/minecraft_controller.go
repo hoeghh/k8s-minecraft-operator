@@ -281,15 +281,15 @@ func newServiceForCR(cr *operatorv1alpha1.Minecraft) *corev1.Service {
                 },
 		Spec: corev1.ServiceSpec{
 			// https://godoc.org/k8s.io/api/core/v1#ServiceSpec
-//			ServiceType: ClusterIP,
 			Ports: []corev1.ServicePort{
 				{
 					Name: "minecraft",
 					Port: 25565,
-// TODO: Use name of port from podspec
 					TargetPort: intstr.FromString("minecraft"),
+					Protocol:   "TCP",
 				},
 			},
+			Type: corev1.ServiceTypeNodePort,
 			Selector: labels,
 		},
 	}
