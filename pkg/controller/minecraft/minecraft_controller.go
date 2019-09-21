@@ -198,14 +198,14 @@ func newIngressForCR(cr *operatorv1alpha1.Minecraft) *extensionsv1beta1.Ingress 
                         Namespace: cr.Namespace,
                         Labels:    labels,
                 },
+                // https://godoc.org/k8s.io/api/extensions/v1beta1#IngressSpec
 		Spec: extensionsv1beta1.IngressSpec{
-		// https://godoc.org/k8s.io/api/extensions/v1beta1#IngressSpec
+	                // https://godoc.org/k8s.io/api/extensions/v1beta1#IngressRule
 			Rules: []extensionsv1beta1.IngressRule{
 				{
 					Host: "static-host.com",  //TODO : Need to get hostname from CR
 				},
 			},
-		// https://godoc.org/k8s.io/api/extensions/v1beta1#IngressRule
 		},
 	}
 }
@@ -231,6 +231,7 @@ func newServiceForCR(cr *operatorv1alpha1.Minecraft) *corev1.Service {
 				{
 					Name: "minecraft",
 					Port: 25565,
+// TODO: Use name of port from podspec
 //					TargetPort: 25565,
 				},
 			},

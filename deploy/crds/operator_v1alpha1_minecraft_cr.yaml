@@ -1,7 +1,7 @@
 apiVersion: operator.softica.com/v1alpha1
 kind: Minecraft
 metadata:
-  name: example-minecraft
+  name: mc-production
 spec:
   # Add fields here
   version: "1.12.2"
