@@ -6,3 +6,5 @@ spec:
   # Add fields here
   version: "1.12.2"
   uela: "true"
+  StorageClassName: "minecraft-storage-class"
+  HostName: minecraft.example.com

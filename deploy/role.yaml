@@ -14,6 +14,7 @@ rules:
   - events
   - configmaps
   - secrets
+  - ingresses
   verbs:
   - '*'
 - apiGroups:
@@ -23,12 +24,14 @@ rules:
   verbs:
   - get
 - apiGroups:
+  - extensions
   - apps
   resources:
   - deployments
   - daemonsets
   - replicasets
   - statefulsets
+  - ingresses
   verbs:
   - '*'
 - apiGroups:

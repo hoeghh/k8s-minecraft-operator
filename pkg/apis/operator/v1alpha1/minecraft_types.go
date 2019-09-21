@@ -16,6 +16,9 @@ type MinecraftSpec struct {
 	// Version of Minecraft to be deployed.
 	Version string `json:"version"`
 	Uela string `json:"uela"`
+	StorageClassName string `json:"storageclassname"`
+	HostName string `json:"hostname"`
+	
 }
 
 // MinecraftStatus defines the observed state of Minecraft

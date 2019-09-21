@@ -184,6 +184,29 @@ func (r *ReconcileMinecraft) Reconcile(request reconcile.Request) (reconcile.Res
 
 }
 
+
+// newIngressForCR returns a minecraft ingress with the same name/namespace as the cr
+func newPVCForCR(cr *operatorv1alpha1.Minecraft) *corev1.PersistentVolumeClaim {
+	labels := map[string]string{
+		"app": cr.Name,
+		"version": cr.Spec.Version,
+		"uela": cr.Spec.Uela,
+}
+	// https://godoc.org/k8s.io/api/core/v1#PersistentVolumeClaim
+        return &corev1.PersistentVolumeClaim{
+                ObjectMeta: metav1.ObjectMeta{
+                        Name:      cr.Name + "-pvc",
+                        Namespace: cr.Namespace,
+                        Labels:    labels,
+                },
+                // https://godoc.org/k8s.io/api/core/v1#PersistentVolumeClaimSpec
+		Spec: corev1.PersistentVolumeClaimSpec{
+					StorageClassName: &cr.Spec.StorageClassName,
+		},
+	}
+}
+
+
 // newIngressForCR returns a minecraft ingress with the same name/namespace as the cr
 func newIngressForCR(cr *operatorv1alpha1.Minecraft) *extensionsv1beta1.Ingress {
 	// https://godoc.org/k8s.io/api/extensions/v1beta1
@@ -203,7 +226,7 @@ func newIngressForCR(cr *operatorv1alpha1.Minecraft) *extensionsv1beta1.Ingress 
 	                // https://godoc.org/k8s.io/api/extensions/v1beta1#IngressRule
 			Rules: []extensionsv1beta1.IngressRule{
 				{
-					Host: "static-host.com",  //TODO : Need to get hostname from CR
+					Host: cr.Spec.HostName,
 				},
 			},
 		},
@@ -293,9 +316,9 @@ func newPodForCR(cr *operatorv1alpha1.Minecraft) *corev1.Pod {
 				{
 					Name: "minecraft-volume",
 					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
- 	                                        	Path: "/data",
-                                                },
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: cr.Name + "-pvc", //cr.Spec.StorageClassName
+						},
 					},
 				},
 			},
