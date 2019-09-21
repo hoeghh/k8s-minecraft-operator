@@ -19,6 +19,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 var log = logf.Log.WithName("controller_minecraft")
@@ -124,8 +126,26 @@ func (r *ReconcileMinecraft) Reconcile(request reconcile.Request) (reconcile.Res
         }
 
 
+		
+        // Define a new PVC object
+        pvc := newPVCForCR(instance)
 
+        // Set Minecraft instance as the owner and controller of the service
+        if err := controllerutil.SetControllerReference(instance, pvc, r.scheme); err != nil {
+                return reconcile.Result{}, err
+        }
 
+        // Check if this Persistant Volume Claim already exists
+        pvcfound := &corev1.PersistentVolumeClaim{}
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: pvc.Name, Namespace: pvc.Namespace}, pvcfound)
+        if err != nil && errors.IsNotFound(err) {
+            err = r.client.Create(context.TODO(), pvc)
+            if err != nil {
+                return reconcile.Result{}, err
+            }
+        } else if err != nil {
+            return reconcile.Result{}, err
+        }
 
 
         // Define a new Service object
@@ -191,7 +211,7 @@ func newPVCForCR(cr *operatorv1alpha1.Minecraft) *corev1.PersistentVolumeClaim {
 		"app": cr.Name,
 		"version": cr.Spec.Version,
 		"uela": cr.Spec.Uela,
-}
+	}
 	// https://godoc.org/k8s.io/api/core/v1#PersistentVolumeClaim
         return &corev1.PersistentVolumeClaim{
                 ObjectMeta: metav1.ObjectMeta{
@@ -202,6 +222,14 @@ func newPVCForCR(cr *operatorv1alpha1.Minecraft) *corev1.PersistentVolumeClaim {
                 // https://godoc.org/k8s.io/api/core/v1#PersistentVolumeClaimSpec
 		Spec: corev1.PersistentVolumeClaimSpec{
 					StorageClassName: &cr.Spec.StorageClassName,
+					AccessModes: []corev1.PersistentVolumeAccessMode{
+						"ReadWriteOnce",
+					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceStorage: resource.MustParse("1Gi"),
+						},
+					},
 		},
 	}
 }
@@ -223,6 +251,10 @@ func newIngressForCR(cr *operatorv1alpha1.Minecraft) *extensionsv1beta1.Ingress 
                 },
                 // https://godoc.org/k8s.io/api/extensions/v1beta1#IngressSpec
 		Spec: extensionsv1beta1.IngressSpec{
+			Backend: &extensionsv1beta1.IngressBackend{
+				ServiceName: cr.Name + "-service",
+				ServicePort:  intstr.FromString("minecraft"),
+			},
 	                // https://godoc.org/k8s.io/api/extensions/v1beta1#IngressRule
 			Rules: []extensionsv1beta1.IngressRule{
 				{
@@ -255,7 +287,7 @@ func newServiceForCR(cr *operatorv1alpha1.Minecraft) *corev1.Service {
 					Name: "minecraft",
 					Port: 25565,
 // TODO: Use name of port from podspec
-//					TargetPort: 25565,
+					TargetPort: intstr.FromString("minecraft"),
 				},
 			},
 			Selector: labels,
